@@ -59,4 +59,31 @@ class TransactionController extends Controller
     {
         return response()->json($transaction);
     }
+
+    public function recentNfcTransactions(): JsonResponse
+{
+    $transactions = Transaction::withNfc()
+                              ->orderBy('transaction_date', 'desc')
+                              ->limit(10)
+                              ->get();
+
+    return response()->json($transactions);
+}
+
+public function summary(Request $request): JsonResponse
+{
+    $startDate = $request->get('start_date', now()->startOfMonth());
+    $endDate = $request->get('end_date', now()->endOfMonth());
+
+    $summary = [
+        'total_transactions' => Transaction::byDateRange($startDate, $endDate)->count(),
+        'total_amount' => Transaction::byDateRange($startDate, $endDate)->sum('amount'),
+        'credit_amount' => Transaction::byDateRange($startDate, $endDate)->byType('credit')->sum('amount'),
+        'debit_amount' => Transaction::byDateRange($startDate, $endDate)->byType('debit')->sum('amount'),
+        'nfc_transactions' => Transaction::byDateRange($startDate, $endDate)->withNfc()->count(),
+        'pending_transactions' => Transaction::byDateRange($startDate, $endDate)->byStatus('pending')->count(),
+    ];
+
+    return response()->json($summary);
+}
 }
