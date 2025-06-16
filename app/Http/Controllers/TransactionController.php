@@ -107,30 +107,28 @@ class TransactionController extends Controller
         }
     }
 
-    public function summary(Request $request): JsonResponse
-    {
-        try {
-            $startDate = $request->get('start_date', now()->startOfMonth());
-            $endDate = $request->get('end_date', now()->endOfMonth());
+   public function summary(Request $request): JsonResponse
+{
+    try {
+        $startDate = $request->get('start_date', now()->startOfMonth());
+        $endDate = $request->get('end_date', now()->endOfMonth());
 
-            $baseQuery = Transaction::byDateRange($startDate, $endDate);
+        $summary = [
+            'total_transactions' => Transaction::byDateRange($startDate, $endDate)->count(),
+            'total_amount' => round(Transaction::byDateRange($startDate, $endDate)->sum('amount'), 2),
+            'credit_amount' => round(Transaction::byDateRange($startDate, $endDate)->where('type', 'credit')->sum('amount'), 2),
+            'debit_amount' => round(Transaction::byDateRange($startDate, $endDate)->where('type', 'debit')->sum('amount'), 2),
+            'nfc_transactions' => Transaction::byDateRange($startDate, $endDate)->whereNotNull('nfc_data')->count(),
+            'pending_transactions' => Transaction::byDateRange($startDate, $endDate)->where('status', 'pending')->count(),
+            'completed_transactions' => Transaction::byDateRange($startDate, $endDate)->where('status', 'completed')->count(),
+            'failed_transactions' => Transaction::byDateRange($startDate, $endDate)->where('status', 'failed')->count(),
+        ];
 
-            $summary = [
-                'total_transactions' => $baseQuery->count(),
-                'total_amount' => round($baseQuery->sum('amount'), 2),
-                'credit_amount' => round($baseQuery->byType('credit')->sum('amount'), 2),
-                'debit_amount' => round($baseQuery->byType('debit')->sum('amount'), 2),
-                'nfc_transactions' => $baseQuery->withNfc()->count(),
-                'pending_transactions' => $baseQuery->byStatus('pending')->count(),
-                'completed_transactions' => $baseQuery->byStatus('completed')->count(),
-                'failed_transactions' => $baseQuery->byStatus('failed')->count(),
-            ];
+        return response()->json($summary);
 
-            return response()->json($summary);
-
-        } catch (\Exception $e) {
-            Log::error('Summary error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to generate summary'], 500);
-        }
+    } catch (\Exception $e) {
+        Log::error('Summary error: ' . $e->getMessage());
+        return response()->json(['error' => 'Failed to generate summary'], 500);
     }
+}
 }
