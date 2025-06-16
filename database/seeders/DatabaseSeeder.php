@@ -2,13 +2,14 @@
 
 namespace Database\Seeders;
 
-use App\Models\Transaction;
 use Illuminate\Database\Seeder;
 
-class TransactionSeeder extends Seeder
+class DatabaseSeeder extends Seeder
 {
     public function run()
     {
-        Transaction::factory()->count(50)->create();
+        $this->call([
+            TransactionSeeder::class,
+        ]);
     }
 }
