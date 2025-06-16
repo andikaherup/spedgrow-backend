@@ -49,43 +49,32 @@ class TransactionController extends Controller
         }
     }
 
-    public function store(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'amount' => 'required|numeric|min:0.01|max:999999.99',
-                'currency' => 'required|string|size:3',
-                'type' => 'required|in:debit,credit',
-                'status' => 'required|in:pending,completed,failed',
-                'merchant_name' => 'nullable|string|max:255',
-                'category' => 'nullable|string|max:100',
-                'nfc_data' => 'nullable|array',
-                'nfc_data.card_id' => 'nullable|string|max:100',
-                'nfc_data.terminal_id' => 'nullable|string|max:50',
-                'nfc_data.signal_strength' => 'nullable|integer|min:-100|max:0',
-                'transaction_date' => 'required|date'
-            ]);
+public function store(Request $request): JsonResponse
+{
+    $validated = $request->validate([
+        'amount' => 'required|numeric|min:0.01|max:999999.99',
+        'currency' => 'required|string|size:3',
+        'type' => 'required|in:debit,credit',
+        'status' => 'required|in:pending,completed,failed',
+        'merchant_name' => 'nullable|string|max:255',
+        'category' => 'nullable|string|max:100',
+        'nfc_data' => 'nullable|array',
+        'nfc_data.card_id' => 'nullable|string|max:100',
+        'nfc_data.terminal_id' => 'nullable|string|max:50',
+        'nfc_data.signal_strength' => 'nullable|integer|min:-100|max:0',
+        'transaction_date' => 'required|date'
+    ]);
 
-            DB::beginTransaction();
+    DB::beginTransaction();
 
-            $validated['transaction_id'] = 'TXN_' . uniqid() . '_' . time();
+    $validated['transaction_id'] = 'TXN_' . uniqid() . '_' . time();
+    $transaction = Transaction::create($validated);
 
-            $transaction = Transaction::create($validated);
+    DB::commit();
 
-            DB::commit();
+    return response()->json($transaction, 201);
+}
 
-            Log::info('Transaction created', ['transaction_id' => $transaction->transaction_id]);
-
-            return response()->json($transaction, 201);
-
-        } catch (ValidationException $e) {
-            return response()->json(['error' => 'Validation failed', 'details' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            DB::rollback();
-            Log::error('Transaction creation error: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to create transaction'], 500);
-        }
-    }
 
     public function show(Transaction $transaction): JsonResponse
     {
