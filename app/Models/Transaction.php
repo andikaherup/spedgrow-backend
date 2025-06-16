@@ -48,4 +48,13 @@ class Transaction extends Model
     {
         return $query->whereNotNull('nfc_data');
     }
+
+    public function scopeSearch(Builder $query, $search)
+    {
+        return $query->where(function($q) use ($search) {
+            $q->where('merchant_name', 'LIKE', "%{$search}%")
+              ->orWhere('transaction_id', 'LIKE', "%{$search}%")
+              ->orWhere('category', 'LIKE', "%{$search}%");
+        });
+    }
 }
