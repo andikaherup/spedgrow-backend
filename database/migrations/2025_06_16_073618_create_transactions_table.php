@@ -13,8 +13,8 @@ return new class extends Migration
             $table->string('transaction_id')->unique();
             $table->decimal('amount', 10, 2);
             $table->string('currency', 3)->default('USD');
-            $table->string('type'); // debit, credit
-            $table->string('status'); // pending, completed, failed
+            $table->enum('type', ['debit', 'credit']);
+            $table->enum('status', ['pending', 'completed', 'failed']);
             $table->string('merchant_name')->nullable();
             $table->string('category')->nullable();
             $table->json('nfc_data')->nullable();
@@ -23,6 +23,7 @@ return new class extends Migration
 
             $table->index(['transaction_date', 'status']);
             $table->index('type');
+            $table->index('status');
         });
     }
 
