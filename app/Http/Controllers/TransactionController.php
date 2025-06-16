@@ -96,21 +96,23 @@ public function store(Request $request): JsonResponse
         }
     }
 
-   public function summary(Request $request): JsonResponse
+ public function summary(Request $request): JsonResponse
 {
     try {
         $startDate = $request->get('start_date', now()->startOfMonth());
         $endDate = $request->get('end_date', now()->endOfMonth());
 
+        $baseQuery = Transaction::byDateRange($startDate, $endDate);
+
         $summary = [
-            'total_transactions' => Transaction::byDateRange($startDate, $endDate)->count(),
-            'total_amount' => round(Transaction::byDateRange($startDate, $endDate)->sum('amount'), 2),
-            'credit_amount' => round(Transaction::byDateRange($startDate, $endDate)->where('type', 'credit')->sum('amount'), 2),
-            'debit_amount' => round(Transaction::byDateRange($startDate, $endDate)->where('type', 'debit')->sum('amount'), 2),
-            'nfc_transactions' => Transaction::byDateRange($startDate, $endDate)->whereNotNull('nfc_data')->count(),
-            'pending_transactions' => Transaction::byDateRange($startDate, $endDate)->where('status', 'pending')->count(),
-            'completed_transactions' => Transaction::byDateRange($startDate, $endDate)->where('status', 'completed')->count(),
-            'failed_transactions' => Transaction::byDateRange($startDate, $endDate)->where('status', 'failed')->count(),
+            'total_transactions' => (clone $baseQuery)->count(),
+            'total_amount' => round((clone $baseQuery)->sum('amount'), 2),
+            'credit_amount' => round((clone $baseQuery)->where('type', 'credit')->sum('amount'), 2),
+            'debit_amount' => round((clone $baseQuery)->where('type', 'debit')->sum('amount'), 2),
+            'nfc_transactions' => (clone $baseQuery)->whereNotNull('nfc_data')->count(),
+            'pending_transactions' => (clone $baseQuery)->where('status', 'pending')->count(),
+            'completed_transactions' => (clone $baseQuery)->where('status', 'completed')->count(),
+            'failed_transactions' => (clone $baseQuery)->where('status', 'failed')->count(),
         ];
 
         return response()->json($summary);
@@ -120,4 +122,5 @@ public function store(Request $request): JsonResponse
         return response()->json(['error' => 'Failed to generate summary'], 500);
     }
 }
+
 }
