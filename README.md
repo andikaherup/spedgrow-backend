@@ -591,6 +591,24 @@ DB::listen(function ($query) {
 });
 ```
 
+## run locally
+
+# 1. Run database migrations
+
+php artisan migrate
+
+# 2. Seed database with sample data
+
+php artisan db:seed
+
+# 3. Or do both in one command
+
+php artisan migrate --seed
+
+# 4. Start the Laravel development server
+
+php artisan serve
+
 ## Future Enhancements
 
 ### Planned Features
